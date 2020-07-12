@@ -6,8 +6,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include "Shader.h"
 
+#include "Shader.h"
+#include "MathUtil.h"
+
+float x = 0;
+double lastX = 400, lastY = 300;
+double yaw, pitch;
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
     std::cout << (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
@@ -15,24 +21,8 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
         type, severity, message) << std::endl;
 }
 
-glm::mat4 viewMatrix(glm::vec3 eye, glm::vec3 center, glm::vec3 up) {
-    // Based on gluLookAt man page
-    glm::vec3 f = normalize(center - eye);
-    glm::vec3 s = normalize(cross(f, up));
-    glm::vec3 u = cross(s, f);
-    return glm::mat4(
-        glm::vec4(s, 0.0),
-        glm::vec4(u, 0.0),
-        glm::vec4(-f, 0.0),
-        glm::vec4(0.0, 0.0, 0.0, 1)
-    );
-}
 
-float x = 0;
 
-double lastX = 400, lastY = 300;
-double yaw, pitch;
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; 
@@ -114,10 +104,7 @@ int main() {
 	glm::vec3 cameraPos = glm::vec3(8.0f, 0.0f, 7.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
     shader.setMat4("view", view);
-    std::cout << glm::to_string(viewMatrix(glm::vec3(2,0,7), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0))) << std::endl;
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    std::cout << glm::to_string(view) << std::endl;
-    std::cout << glm::to_string(view - viewMatrix(glm::vec3(2,0,7), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0))) << std::endl;
     shader.setMat4("viewToWorld", view);
     shader.setVec3("cameraPos", cameraPos);
 
@@ -154,16 +141,13 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
             x -= 0.001;
         }
-        //std::cout << glm::to_string(cameraPos) << std::endl;
-        //cameraPos.x += 0.01;
-		//view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         shader.setFloat("wPos", x);
-        //cameraPos = glm::vec3(8 * sin(glfwGetTime()), 5, 8 * cos(glfwGetTime()));
         view = glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-        //view = glm::translate(view, glm::vec3(0,0,cameraPos.x));
         shader.setMat4("viewToWorld", view);
-        //shader.setMat4("view", view);
         shader.setVec3("cameraPos", cameraPos);
+
+        rotate4D(model, 0, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, 0));
+        shader.setMat4("model", model);
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, GL_TRUE);

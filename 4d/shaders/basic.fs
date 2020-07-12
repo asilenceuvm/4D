@@ -7,35 +7,12 @@ const float EPSILON = 0.0001;
 
 uniform float time;
 uniform float wPos;
+uniform mat4 viewToWorld;
+uniform mat4 model;
+uniform vec3 cameraPos;
 
 out vec4 fragColor;
 
-mat4 rotXW(float theta) {
-    return mat4(
-        vec4(cos(theta), 0, 0, sin(theta)),
-        vec4(0, 1, 0, 0),
-        vec4(0, 0, 1, 0),
-        vec4(-sin(theta), 0, 0, cos(theta))
-    );
-}
- 
-mat4 rotYW(float theta) {
-    return mat4(
-        vec4(1, 0, 0, 0),
-        vec4(0, cos(theta), 0, -sin(theta)),
-        vec4(0, 0, 1, 0),
-        vec4(0, sin(theta), 0, cos(theta))
-    );
-}
-
-mat4 rotZW(float theta) {
-    return mat4(
-        vec4(1, 0, 0, 0),
-        vec4(0, 1, 0, 0),
-        vec4(0, 0, cos(theta), -sin(theta)),
-        vec4(0, 0, sin(theta), cos(theta))
-    );
-}
 
 float sixteenCellSDF(vec4 p, float s) {
 	p = abs(p);
@@ -53,12 +30,8 @@ float hypersphereSDF(vec4 p) {
 
 
 float sceneSDF(vec4 samplePoint) {
-    samplePoint = rotXW(sin(time)) * samplePoint;
-    samplePoint = rotYW(cos(time)) * samplePoint;
-    //samplePoint = rotZW(cos(time)) * samplePoint;
-    //float point = hypercubeSDF(samplePoint, 1) + hypersphereSDF(samplePoint);
+    samplePoint = model * samplePoint;
     //return hypersphereSDF(samplePoint);
-    //return point;
     return hypercubeSDF(samplePoint, 1);
     //return sixteenCellSDF(samplePoint, 1);
 }
@@ -132,7 +105,6 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 c
 }
 
 mat4 viewMatrix(vec3 cameraPos, vec3 center, vec3 up) {
-    // Based on gluLookAt man page
     vec3 f = normalize(center - cameraPos);
     vec3 s = normalize(cross(f, up));
     vec3 u = cross(s, f);
@@ -144,29 +116,19 @@ mat4 viewMatrix(vec3 cameraPos, vec3 center, vec3 up) {
     );
 }
 
-uniform mat4 viewToWorld;
-uniform vec3 cameraPos;
-
-
 void main() {
 	vec3 viewDir = rayDirection(45.0, vec2(800, 600), gl_FragCoord.xy);
     vec3 eye = vec3(8 * sin(time), 5 , 8 * cos(time));
-/*   
-    mat4 worldView = viewMatrix(eye, vec3(0,0,0), vec3(0,1,0));
-    vec3 worldDir = (worldView  * vec4(viewDir, 0.0)).xyz;
-    float dist = shortestDistanceToSurface(eye, worldDir, MIN_DIST, MAX_DIST);
-*/
+
     mat4 worldView = viewMatrix(cameraPos, vec3(0,0,0), vec3(0,1,0));
     vec3 worldDir = (worldView  * vec4(viewDir, 0.0)).xyz;
     float dist = shortestDistanceToSurface(cameraPos, worldDir, MIN_DIST, MAX_DIST);
     
     if (dist > MAX_DIST - EPSILON) {
-        // Didn't hit anything
         fragColor = vec4(0.0, 0.0, 0.0, 0.0);
 		return;
     }
     
-    // The closest point on the surface to the cameraPospoint along the view ray
     vec3 p = cameraPos + dist * worldDir;
     
     vec3 K_a = vec3(0.2, 0.2, 0.2);
@@ -175,8 +137,6 @@ void main() {
     float shininess = 10.0;
     
     vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, cameraPos);
-    //color = vec3(0.7, 0.2, 0.2);
-    //color = estimateNormal(dist * worldDir);
     
     fragColor = vec4(color, 1.0);
 }
