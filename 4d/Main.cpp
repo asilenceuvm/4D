@@ -23,7 +23,7 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 		Logger::logError("GL_ERROR", log);
 	}
 	else {
-		Logger::logWarning("GL_WARNING", log);
+		Logger::logWarning(log);
 	}
 }
 
@@ -115,12 +115,12 @@ int main() {
 
 	window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
-		Logger::logError("Starting opengl context");
+		Logger::logError("OPENGL", "Starting opengl context");
         glfwTerminate();
         return -1;
 	}
 	else {
-		Logger::logSuccess("Starting opengl context");
+		Logger::logSuccess("OPENGL", "Starting opengl context");
 	}
 
     glfwMakeContextCurrent(window);
@@ -135,8 +135,16 @@ int main() {
 	glEnable(GL_BLEND);  
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	const GLubyte* log = (stderr, "Graphics context: %s\n", (glGetString(GL_RENDERER)));
-	Logger::logMessage("OPENGL", log);
+	//const GLubyte* log = (stderr, "Graphics context: %s\n", (glGetString(GL_RENDERER)));
+	//const GLubyte* log = std::string("Graphics context: ") + std::string(glGetString(GL_RENDERER)));
+	std::string log = "Graphics context: ";
+	log += (char*)(glGetString(GL_RENDERER));
+	Logger::logInfo("OPENGL", log.c_str());
+
+
+	log = "Opengl version: ";
+	log += (char*)(glGetString(GL_VERSION));
+	Logger::logInfo("OPENGL", log.c_str());
 
     glfwSetCursorPosCallback(window, mouseCallback);  
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
