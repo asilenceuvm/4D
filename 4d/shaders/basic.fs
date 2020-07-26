@@ -9,6 +9,7 @@ uniform float time;
 uniform float wPos;
 uniform mat4 viewToWorld;
 uniform mat4 model;
+uniform vec4 transform;
 uniform vec3 cameraPos;
 
 out vec4 fragColor;
@@ -30,9 +31,15 @@ float hypersphereSDF(vec4 p) {
 
 
 float sceneSDF(vec4 samplePoint) {
-    samplePoint = model * samplePoint;
+    vec4 drawPoint = model * (samplePoint + transform);
+
+    /*float c = 1.5;
+	vec4 q = mod(drawPoint + 0.5 * c, c) - 0.5 * c;
+    return hypercubeSDF(q, 0.2);*/
+
     //return hypersphereSDF(samplePoint);
-    return hypercubeSDF(samplePoint, 1);
+    return hypercubeSDF(drawPoint, 1);
+    //return max(hypercubeSDF(drawPoint, 0.8), sixteenCellSDF(drawPoint, 1I));
     //return sixteenCellSDF(samplePoint, 1);
 }
 
@@ -94,8 +101,8 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 c
     const vec3 ambientLight = 0.5 * vec3(1.0, 1.0, 1.0);
     vec3 color = ambientLight * k_a;
     
-    vec3 light1Pos = vec3(4.0, 2.0, 4.0);
-    vec3 light1Intensity = vec3(0.4, 0.4, 0.4);
+    vec3 light1Pos = vec3(8.0, 2.0, 4.0);
+    vec3 light1Intensity = vec3(0.5, 0.5, 0.5);
     
     color += phongContribForLight(k_d, k_s, alpha, p, cameraPos,
                                   light1Pos,
@@ -138,5 +145,5 @@ void main() {
     
     vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, cameraPos);
     
-    fragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1);
 }

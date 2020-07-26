@@ -32,6 +32,15 @@ glm::mat4 rotZW(float theta) {
     );
 }
 
+glm::mat4 doubleRot(float theta) {
+    return glm::mat4(
+        glm::vec4(cos(theta), -sin(theta), 0, 0),
+        glm::vec4(sin(theta),  cos(theta), 0, 0),
+        glm::vec4(0, 0, cos(theta), -sin(theta)),
+        glm::vec4(0, 0, sin(theta),  cos(theta))
+    );
+}
+
 /* 4d rotation function meant to act like glm's rotate
  * m is the matrix to rotate
  * rad is degrees in radians
@@ -43,4 +52,15 @@ glm::mat4 rotZW(float theta) {
 void rotate4D(glm::mat4& m, float rad, glm::vec3 u, glm::vec3 w) {
     m = glm::rotate(m, glm::radians(rad), u);
     m = m * rotXW(w.x) * rotYW(w.y) * rotZW(w.z);
+}
+
+void translate4D(glm::mat4& m, glm::vec4 offset) {
+    glm::mat4 translate = glm::mat4(
+        glm::vec4(1, 0, 0, offset.x),
+        glm::vec4(0, 1, 0, offset.y),
+        glm::vec4(0, 0, 1, offset.z),
+        glm::vec4(0, 0, 0, offset.w == 0 ? 1 : offset.w)
+    );
+    m *= translate;
+    
 }

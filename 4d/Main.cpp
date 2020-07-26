@@ -45,7 +45,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
     direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     direction.y = sin(glm::radians(pitch));
     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    //cameraFront = glm::normalize(direction);
+    cameraFront = glm::normalize(direction);
 }
 
 int main() {
@@ -70,6 +70,9 @@ int main() {
 
     glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(MessageCallback, 0);
+
+	glEnable(GL_BLEND);  
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glfwSetCursorPosCallback(window, mouseCallback);  
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
@@ -112,6 +115,15 @@ int main() {
 	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     shader.setMat4("projection", projection);
 
+    Shader shader2("shaders/basic.vs", "shaders/basic.fs");
+    shader2.use();
+    shader2.setMat4("model", model);
+    shader2.setMat4("view", view);
+    shader2.setMat4("viewToWorld", view);
+    shader2.setVec3("cameraPos", cameraPos);
+    shader2.setMat4("projection", projection);
+
+
     while(!glfwWindowShouldClose(window)) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -122,7 +134,7 @@ int main() {
 
         shader.setFloat("time", glfwGetTime());
 
-        const float cameraSpeed = 0.05f; // adjust accordingly
+        const float cameraSpeed = 0.05f;  
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             cameraPos += cameraSpeed * cameraFront;
         } 
@@ -146,8 +158,17 @@ int main() {
         shader.setMat4("viewToWorld", view);
         shader.setVec3("cameraPos", cameraPos);
 
-        rotate4D(model, 0, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, 0));
+        //model = glm::translate(model,  glm::vec3(x, 0, 0));
+        rotate4D(model, 0.1, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, sin(glfwGetTime()) * 0.005));
+        //rotate4D(model, 0, glm::vec3(0, 0, 1), glm::vec3(0, 0, sin(glfwGetTime()) * 0.005));
+        //rotate4D(model, 0.0, glm::vec3(0, 0, 1), glm::vec3(0.001,0,0));
+        //translate4D(model, glm::vec4(x, 0, 0, 1));
+        //translate4D(model, glm::vec4(0.1,0,0,0));
+        //model = glm::translate(model, glm::vec3(0.0f, 50.0f, 0.0f));
         shader.setMat4("model", model);
+
+
+        shader.setVec4("transform", glm::vec4(0, 0, sin(glfwGetTime()), 0));
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, GL_TRUE);
