@@ -11,7 +11,7 @@
 
 #include "Shader.h"
 #include "MathUtil.h"
-
+#include "InputManager.h"
 
 class Solid {
 public:
@@ -54,26 +54,26 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 
-	void update(GLFWwindow* window) {
+	void update() {
         shader->setFloat("time", glfwGetTime());
 
         const float cameraSpeed = 0.05f;  
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_W] == GLFW_PRESS) {
             cameraPos += cameraSpeed * cameraFront;
         } 
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_S] == GLFW_PRESS) {
             cameraPos -= cameraSpeed * cameraFront;
         }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_A] == GLFW_PRESS) {
             cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
         }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_D] == GLFW_PRESS) {
             cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
         }
-        if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_I] == GLFW_PRESS) {
             x += 0.001;
         }
-        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        if (InputManager::keys[GLFW_KEY_K] == GLFW_PRESS) {
             x -= 0.001;
         }
         shader->setFloat("wPos", x);

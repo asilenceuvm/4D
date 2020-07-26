@@ -11,9 +11,8 @@
 #include "MathUtil.h"
 #include "Solid.h"
 #include "Logger.h"
+#include "InputManager.h"
 
-double lastX = 400, lastY = 300;
-double yaw, pitch;
 GLFWwindow* window;
 Solid* solid;
 
@@ -23,43 +22,17 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 		Logger::logError("GL_ERROR", log);
 	}
 	else {
-		Logger::logWarning(log);
+		Logger::logWarning("OPENGL", log, false);
 	}
-}
-
-
-
-void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; 
-    lastX = xpos;
-    lastY = ypos;
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw   += xoffset;
-    pitch += yoffset;
-
-    if(pitch > 89.0f)
-        pitch = 89.0f;
-    if(pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    //cameraFront = glm::normalize(direction);
 }
 
 void update() {
-	solid->update(window);
+	solid->update();
 
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	if (InputManager::keys[GLFW_KEY_ESCAPE] == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
+
 	glfwPollEvents();    
 }
 
@@ -68,6 +41,7 @@ void render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	solid->render();
+
 	glfwSwapBuffers(window);
 }
 
@@ -135,19 +109,19 @@ int main() {
 	glEnable(GL_BLEND);  
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	//const GLubyte* log = (stderr, "Graphics context: %s\n", (glGetString(GL_RENDERER)));
-	//const GLubyte* log = std::string("Graphics context: ") + std::string(glGetString(GL_RENDERER)));
 	std::string log = "Graphics context: ";
 	log += (char*)(glGetString(GL_RENDERER));
 	Logger::logInfo("OPENGL", log.c_str());
-
 
 	log = "Opengl version: ";
 	log += (char*)(glGetString(GL_VERSION));
 	Logger::logInfo("OPENGL", log.c_str());
 
-    glfwSetCursorPosCallback(window, mouseCallback);  
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+	glfwSetKeyCallback(window, InputManager::keyCallback);
+	glfwSetCursorPosCallback(window, InputManager::mouseCallback);
+	glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
+	glfwSetScrollCallback(window, InputManager::scrollCallback);
+	glfwSetFramebufferSizeCallback(window, InputManager::framebufferSizeCallback);
 
 	solid = new Solid();
 	run(1.0/120.0);

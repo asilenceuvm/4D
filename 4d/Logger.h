@@ -25,19 +25,16 @@ namespace Logger {
 		}
 	}
 
-	inline void logWarning(const char* message, const char* warning) {
+	inline void logWarning(const char* category, const char* message, bool timed, const char* warning = "") {
 		if (showWarning) {
 			SetConsoleTextAttribute(hConsole, 14);
-			std::cout << message << " finished. Took " << getSysTime() - sectionStartTime << " ms." << std::endl;
-			std::cout << "Warning: " << warning << std::endl;
-			SetConsoleTextAttribute(hConsole, 15);
-		}
-	}
-
-	inline void logWarning(const char* warning) {
-		if (showWarning) {
-			SetConsoleTextAttribute(hConsole, 14);
-			std::cout << "Warning: " << warning << std::endl;
+			if (timed) {
+				std::cout << "[" << category << "] " << message << " finished. Took " << getSysTime() - sectionStartTime << " ms." << std::endl;
+				std::cout <<  "Warning: " << warning << std::endl;
+			}
+			else {
+				std::cout << "[" << category << "] " << message << std::endl;
+			}
 			SetConsoleTextAttribute(hConsole, 15);
 		}
 	}
