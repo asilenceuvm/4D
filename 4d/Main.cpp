@@ -9,16 +9,22 @@
 
 #include "Shader.h"
 #include "MathUtil.h"
+#include "Solid.h"
+#include "Logger.h"
 
-float x = 0;
 double lastX = 400, lastY = 300;
 double yaw, pitch;
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+GLFWwindow* window;
+Solid* solid;
 
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
-    std::cout << (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-        (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
-        type, severity, message) << std::endl;
+	const GLchar* log = (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+	if (type == GL_DEBUG_TYPE_ERROR) {
+		Logger::logError("GL_ERROR", log);
+	}
+	else {
+		Logger::logWarning("GL_WARNING", log);
+	}
 }
 
 
@@ -45,139 +51,101 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
     direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     direction.y = sin(glm::radians(pitch));
     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+    //cameraFront = glm::normalize(direction);
+}
+
+void update() {
+	solid->update(window);
+
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+	glfwPollEvents();    
+}
+
+void render() {
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	solid->render();
+	glfwSwapBuffers(window);
+}
+
+void run(double delta) {
+	double lastTime = glfwGetTime(), timer = lastTime;
+	double deltaTime = 0, nowTime = 0;
+	int frames = 0, updates = 0;
+
+	//enter loop
+	while (!glfwWindowShouldClose(window)) {
+
+		//get time
+		nowTime = glfwGetTime();
+		deltaTime += (nowTime - lastTime) / delta;
+		lastTime = nowTime;
+
+		//update at delta
+		while (deltaTime >= 1.0) {
+			update();
+			updates++;
+			deltaTime--;
+		}
+
+		render();
+		frames++;
+
+		//reset and output fps
+		if (glfwGetTime() - timer > 1.0) {
+			timer++;
+			std::cout << "FPS: " << frames << " Updates:" << updates << std::endl;
+			updates = 0;
+			frames = 0;
+		}
+
+	}
 }
 
 int main() {
+	Logger::logMessage("OPENGL", "Starting opengl context");
 	glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
+		Logger::logError("Starting opengl context");
         glfwTerminate();
         return -1;
-    }
+	}
+	else {
+		Logger::logSuccess("Starting opengl context");
+	}
+
     glfwMakeContextCurrent(window);
+	//glfwSwapInterval(0);
     glViewport(0, 0, 800, 600);
-    
-    glEnable(GL_DEPTH_TEST);  
 
     glewInit();
-
+    glEnable(GL_DEPTH_TEST);  
     glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(MessageCallback, 0);
 
 	glEnable(GL_BLEND);  
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	const GLubyte* log = (stderr, "Graphics context: %s\n", (glGetString(GL_RENDERER)));
+	Logger::logMessage("OPENGL", log);
+
     glfwSetCursorPosCallback(window, mouseCallback);  
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
-    float vertices[] = {
-		-1, -1, -1, 0.0f,
-		 1, -1, -1, 0.0f,
-		 1,  1, -1, 0.0f, 
-		 1,  1, -1, 0.0f, 
-		-1,  1, -1, 0.0f, 
-		-1, -1, -1, 0.0f, 
-    };
-    
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);  
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);  
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    Shader shader("shaders/basic.vs", "shaders/basic.fs");
-    shader.use();
-
-    glm::mat4 model = glm::mat4(1);
-    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    shader.setMat4("model", model);
-
-    glm::mat4 view = glm::mat4(1);
-	glm::vec3 cameraPos = glm::vec3(8.0f, 0.0f, 7.0f);
-	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
-    shader.setMat4("view", view);
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    shader.setMat4("viewToWorld", view);
-    shader.setVec3("cameraPos", cameraPos);
-
-    glm::mat4 projection = glm::mat4(1);
-	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    shader.setMat4("projection", projection);
-
-    Shader shader2("shaders/basic.vs", "shaders/basic.fs");
-    shader2.use();
-    shader2.setMat4("model", model);
-    shader2.setMat4("view", view);
-    shader2.setMat4("viewToWorld", view);
-    shader2.setVec3("cameraPos", cameraPos);
-    shader2.setMat4("projection", projection);
-
-
-    while(!glfwWindowShouldClose(window)) {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shader.use();
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        shader.setFloat("time", glfwGetTime());
-
-        const float cameraSpeed = 0.05f;  
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            cameraPos += cameraSpeed * cameraFront;
-        } 
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            cameraPos -= cameraSpeed * cameraFront;
-        }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-        }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-        }
-        if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-            x += 0.001;
-        }
-        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-            x -= 0.001;
-        }
-        shader.setFloat("wPos", x);
-        view = glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-        shader.setMat4("viewToWorld", view);
-        shader.setVec3("cameraPos", cameraPos);
-
-        //model = glm::translate(model,  glm::vec3(x, 0, 0));
-        rotate4D(model, 0.1, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, sin(glfwGetTime()) * 0.005));
-        //rotate4D(model, 0, glm::vec3(0, 0, 1), glm::vec3(0, 0, sin(glfwGetTime()) * 0.005));
-        //rotate4D(model, 0.0, glm::vec3(0, 0, 1), glm::vec3(0.001,0,0));
-        //translate4D(model, glm::vec4(x, 0, 0, 1));
-        //translate4D(model, glm::vec4(0.1,0,0,0));
-        //model = glm::translate(model, glm::vec3(0.0f, 50.0f, 0.0f));
-        shader.setMat4("model", model);
-
-
-        shader.setVec4("transform", glm::vec4(0, 0, sin(glfwGetTime()), 0));
-
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(window, GL_TRUE);
-        }
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();    
-    }
+	solid = new Solid();
+	run(1.0/120.0);
+	delete solid;
 
     glfwTerminate();
 	return 0;
 }
+
