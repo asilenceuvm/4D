@@ -17,12 +17,12 @@ class Solid {
 public:
     Solid() {
 		float vertices[] = {
-			-1, -1, -1, 0.0f,
-			 1, -1, -1, 0.0f,
-			 1,  1, -1, 0.0f, 
-			 1,  1, -1, 0.0f, 
-			-1,  1, -1, 0.0f, 
-			-1, -1, -1, 0.0f, 
+			-1, -1, -1, 
+			 1, -1, -1, 
+			 1,  1, -1,  
+			 1,  1, -1,  
+			-1,  1, -1,  
+			-1, -1, -1,  
 		};
 		
 		glGenVertexArrays(1, &VAO);
@@ -31,7 +31,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);  
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
 		glEnableVertexAttribArray(0);
 
 		shader = std::make_unique<Shader>("shaders/basic.vs", "shaders/basic.fs");
@@ -81,7 +81,7 @@ public:
         shader->setMat4("viewToWorld", view);
         shader->setVec3("cameraPos", cameraPos);
 
-        rotate4D(model, 0.1, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, sin(glfwGetTime()) * 0.005));
+        MathUtil::rotate4D(model, 0.1, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, sin(glfwGetTime()) * 0.005));
         shader->setMat4("model", model);
 
 
