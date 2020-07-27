@@ -15,18 +15,9 @@ uniform vec3 cameraPos;
 out vec4 fragColor;
 
 
-float sixteenCellSDF(vec4 p, float s) {
-	p = abs(p);
-	return (p.x + p.y + p.z + p.w - s) * 0.57735027f;
-}
-
 float hypercubeSDF(vec4 samplePoint, float size) {
     vec4 d = abs(samplePoint) - size;
     return min(max(d.x, max(d.y, max(d.z, d.w))), 0.0) + length(max(d, 0.0));
-}
-
-float hypersphereSDF(vec4 p) {
-    return length(p) - 1.0;
 }
 
 

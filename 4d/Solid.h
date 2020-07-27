@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "Shader.h"
+#include "ShaderBuilder.h"
 #include "MathUtil.h"
 #include "InputManager.h"
 
@@ -34,7 +35,9 @@ public:
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
 		glEnableVertexAttribArray(0);
 
-		shader = std::make_unique<Shader>("shaders/basic.vs", "shaders/basic.fs");
+		//shader = std::make_unique<Shader>("shaders/basic.vs", "shaders/basic.fs");
+		shader = std::make_unique<Shader>(ShaderBuilder::getDefaultVertexShader(), ShaderBuilder::generateShader(ShaderBuilder::hypercube, 1));
+
 		shader->use();
 
 		model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));

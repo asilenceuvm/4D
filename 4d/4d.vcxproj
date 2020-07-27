@@ -149,6 +149,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MathUtil.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShaderBuilder.h" />
     <ClInclude Include="Solid.h" />
   </ItemGroup>
   <ItemGroup>
