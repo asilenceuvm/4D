@@ -12,6 +12,7 @@
 #include "Solid.h"
 #include "Logger.h"
 #include "InputManager.h"
+#include "ShaderBuilder.h"
 
 GLFWwindow* window;
 Solid* solid;
@@ -27,6 +28,7 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 }
 
 void update() {
+	solid->rotate(0.1, glm::vec3(0, 0, 1), glm::vec3(0, 0, 0));
 	solid->update();
 
 	if (InputManager::keys[GLFW_KEY_ESCAPE] == GLFW_PRESS) {
@@ -122,8 +124,8 @@ int main() {
 	glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
 	glfwSetScrollCallback(window, InputManager::scrollCallback);
 	glfwSetFramebufferSizeCallback(window, InputManager::framebufferSizeCallback);
-
-	solid = new Solid();
+	
+	solid = new Solid(ShaderBuilder::subtractionSDFString(ShaderBuilder::hypercubeSDFString(1),ShaderBuilder::hypersphereSDFString(1.1)));
 	run(1.0/120.0);
 	delete solid;
 

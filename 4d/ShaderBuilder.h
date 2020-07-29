@@ -25,6 +25,7 @@ namespace ShaderBuilder {
 		"}\n";
 
 	std::array<std::string, 3> shapes = { hypercubeSDF, sixteenCellSDF, hypersphereSDF };
+	std::array<std::string, 3> shapeNames = { "hypercubeSDF", "sixteenCellSDF", "hypersphereSDF" };
 
 	std::string sceneSDFHeader =
 		"float sceneSDF(vec4 samplePoint) {\n"
@@ -135,29 +136,56 @@ namespace ShaderBuilder {
 	static const int sixteenCell = 1;
 	static const int hypersphere = 2;
 
-	inline std::string generateShader(int shapeSDF, float size) {
+	inline std::string hypercubeSDFString(float size) {
+		return "hypercubeSDF(drawPoint, " + std::to_string(size) + ")";
+	}
+	inline std::string sixteenCellSDFString(float size) {
+		return "sixteenCellSDF(drawPoint, " + std::to_string(size) + ")";
+	}
+	inline std::string hypersphereSDFString(float size) {
+		return "hypersphereSDF(drawPoint, " + std::to_string(size) + ")";
+	}
+
+	inline std::string unionSDFString(std::string p1, std::string p2) {
+		return "min(" + p1 + ", " + p2 + ")";
+	}
+	inline std::string subtractionSDFString(std::string p1, std::string p2) {
+		return "max(-" + p1 + ", " + p2 + ")";
+	}
+	inline std::string IntersectionSDFString(std::string p1, std::string p2) {
+		return "max(" + p1 + ", " + p2 + ")";
+	}
+
+	inline std::string getIDName(const int id) {
+		switch (id) {
+		case hypercube:
+			return "hypercube";
+			break;
+		case sixteenCell:
+			return "sixteen cell";
+			break;
+		}
+		return "hypersphere";
+	}
+
+	inline std::string generateFragmentShader(std::string sceneSDF) {
 		std::string shader = header;
 
 		//add shape sdfs 
-		shader += shapes[shapeSDF];
+		for (int i = 0; i < shapes.size(); ++i) {
+			bool exists = sceneSDF.find(shapeNames[i]) != std::string::npos;
+			if (exists) {
+				shader += shapes[i];
+			}
+		}
 
 		//make sceneSDF function
 		shader += sceneSDFHeader;
-
-		//TODO: add logic to intersections, unions and subtractions
-		switch (shapeSDF) {
-		case hypercube:
-			shader += "return hypercubeSDF(drawPoint, " + std::to_string(size) + ");";
-			break;
-		case sixteenCell:
-			shader += "return sixteenCellSDF(drawPoint, " + std::to_string(size) + ");";
-			break;
-		default:
-			shader += "return hypersphereSDF(drawPoint, " + std::to_string(size) + ");";
-		}
+		shader += "return ";
+		shader += sceneSDF;
+		shader += ";";
 
 		shader += "\n}\n";
-		
 		shader += footer;
 
 		return shader;

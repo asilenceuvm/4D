@@ -14,9 +14,11 @@
 #include "MathUtil.h"
 #include "InputManager.h"
 
+#define GET_VARIABLE_NAME(Variable) (#Variable)
+
 class Solid {
 public:
-    Solid() {
+    Solid(std::string sdf) {
 		float vertices[] = {
 			-1, -1, -1, 
 			 1, -1, -1, 
@@ -35,8 +37,17 @@ public:
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
 		glEnableVertexAttribArray(0);
 
-		//shader = std::make_unique<Shader>("shaders/basic.vs", "shaders/basic.fs");
-		shader = std::make_unique<Shader>(ShaderBuilder::getDefaultVertexShader(), ShaderBuilder::generateShader(ShaderBuilder::hypercube, 1));
+		std::string name = "";
+		for (int i = 0; i < ShaderBuilder::shapes.size(); ++i) {
+			bool exists = sdf.find(ShaderBuilder::shapeNames[i]) != std::string::npos;
+			if (exists) {
+				name += ShaderBuilder::shapeNames[i];
+				if (i != ShaderBuilder::shapes.size() - 1) {
+					name += "/";
+				}
+			}
+		}
+		shader = std::make_unique<Shader>(ShaderBuilder::getDefaultVertexShader(), ShaderBuilder::generateFragmentShader(sdf), name);
 
 		shader->use();
 
@@ -58,11 +69,8 @@ public:
 	}
 
 	void update() {
-        shader->setFloat("time", glfwGetTime());
-
         const float cameraSpeed = 0.05f;  
-        if (InputManager::keys[GLFW_KEY_W] == GLFW_PRESS) {
-            cameraPos += cameraSpeed * cameraFront;
+        if (InputManager::keys[GLFW_KEY_W] == GLFW_PRESS) { cameraPos += cameraSpeed * cameraFront;
         } 
         if (InputManager::keys[GLFW_KEY_S] == GLFW_PRESS) {
             cameraPos -= cameraSpeed * cameraFront;
@@ -79,29 +87,38 @@ public:
         if (InputManager::keys[GLFW_KEY_K] == GLFW_PRESS) {
             x -= 0.001;
         }
-        shader->setFloat("wPos", x);
+
         view = glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
         shader->setMat4("viewToWorld", view);
+
         shader->setVec3("cameraPos", cameraPos);
-
-        MathUtil::rotate4D(model, 0.1, glm::vec3(0, 0, 1), glm::vec3(sin(glfwGetTime()) * 0.005, cos(glfwGetTime()) * 0.005, sin(glfwGetTime()) * 0.005));
         shader->setMat4("model", model);
+        shader->setVec4("transform", transform);
+        shader->setFloat("time", glfwGetTime());
+        shader->setFloat("wPos", x);
+	}
 
+	void rotate(float rot, glm::vec3 u, glm::vec3 w) {
+        MathUtil::rotate4D(model, rot, u, w);
+	}
 
-        shader->setVec4("transform", glm::vec4(0, 0, sin(glfwGetTime()), 0));
-
+	void translate(glm::vec4 delta) {
+		transform = delta;
 	}
 
 private:
     unsigned int VBO, VAO;
 	std::unique_ptr<Shader> shader;
+
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraPos = glm::vec3(8.0f, 0.0f, 7.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
+
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 view = glm::mat4(1);
 	glm::mat4 projection = glm::mat4(1);
 
+	glm::vec4 transform = glm::vec4(0, 0, 0, 0);
 	float x = 0;
 
 };

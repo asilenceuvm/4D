@@ -2,12 +2,13 @@
 
 #include "GL/glew.h"
 #include <glm/glm.hpp>
-#include <Eigen/Dense>
 
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+
+#include "Logger.h"
 
 class Shader {
 public:
@@ -66,7 +67,10 @@ public:
         glDeleteShader(fragment);
     }
 
-    Shader(const std::string vertexCode, const std::string fragmentCode) {
+    Shader(const std::string vertexCode, const std::string fragmentCode, const std::string name) {
+        std::string message = "Generating " + name + " shader";
+        Logger::logMessage("SHADER", message.c_str());
+        bool error = false;
         const char* vShaderCode = vertexCode.c_str();
         const char * fShaderCode = fragmentCode.c_str();
         // 2. compile shaders
@@ -75,21 +79,37 @@ public:
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
+        if (checkCompileErrors(vertex, "VERTEX")) {
+            Logger::logError("SHADER", "Error compiling vertex shader");
+            error = true;
+        }
+
         // fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
+        if (checkCompileErrors(fragment, "FRAGMENT")) {
+            Logger::logError("SHADER", "Error compiling fragment shader");
+            error = true;
+        }
+
         // shader Program
         ID = glCreateProgram();
         glAttachShader(ID, vertex);
         glAttachShader(ID, fragment);
         glLinkProgram(ID);
-        checkCompileErrors(ID, "PROGRAM");
+        if (checkCompileErrors(ID, "PROGRAM")) {
+            Logger::logError("SHADER", "Error compiling shader program");
+            error = true;
+        }
+
         // delete the shaders as they're linked into our program now and no longer necessary
         glDeleteShader(vertex);
         glDeleteShader(fragment);
+
+        if (!error) {
+            Logger::logSuccess("SHADER", message.c_str());
+        }
     }
 
     // activate the shader
@@ -141,22 +161,23 @@ public:
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
-    void checkCompileErrors(unsigned int shader, std::string type) {
+    bool checkCompileErrors(unsigned int shader, std::string type) {
         int success;
         char infoLog[1024];
         if (type != "PROGRAM") {
             glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
             if (!success) {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+                return true;
             }
         }
         else {
             glGetProgramiv(shader, GL_LINK_STATUS, &success);
             if (!success) {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+                return true;
             }
         }
+        return false;
     }
 };
