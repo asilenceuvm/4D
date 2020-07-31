@@ -28,10 +28,10 @@ public:
 			-1, -1, -1,  
 		};
 		
-		glGenVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-		glGenBuffers(1, &VBO);  
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);  
+		glGenVertexArrays(1, &this->VAO);
+		glBindVertexArray(this->VAO);
+		glGenBuffers(1, &this->VBO);  
+		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);  
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
@@ -64,11 +64,14 @@ public:
 
 	void render() {
         shader->use();
-        glBindVertexArray(VAO);
+        glBindVertexArray(this->VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		glUseProgram(0);
 	}
 
 	void update() {
+		shader->use();
         const float cameraSpeed = 0.05f;  
         if (InputManager::keys[GLFW_KEY_W] == GLFW_PRESS) { cameraPos += cameraSpeed * cameraFront;
         } 

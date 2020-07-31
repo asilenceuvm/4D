@@ -16,6 +16,7 @@
 
 GLFWwindow* window;
 Solid* solid;
+Solid* solid2;
 
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
 	const GLchar* log = (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
@@ -28,8 +29,9 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 }
 
 void update() {
-	solid->rotate(0.1, glm::vec3(0, 0, 1), glm::vec3(0, 0, 0));
+	solid->rotate(0.1, glm::vec3(0, 0, 1), glm::vec3(0.001, 0, 0));
 	solid->update();
+	solid2->update();
 
 	if (InputManager::keys[GLFW_KEY_ESCAPE] == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
@@ -42,6 +44,7 @@ void render() {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	solid2->render();
 	solid->render();
 
 	glfwSwapBuffers(window);
@@ -110,6 +113,8 @@ int main() {
 
 	glEnable(GL_BLEND);  
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glDepthMask(false);
+	//glEnable(GL_DITHER);
 
 	std::string log = "Graphics context: ";
 	log += (char*)(glGetString(GL_RENDERER));
@@ -126,8 +131,10 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, InputManager::framebufferSizeCallback);
 	
 	solid = new Solid(ShaderBuilder::subtractionSDFString(ShaderBuilder::hypercubeSDFString(1),ShaderBuilder::hypersphereSDFString(1.1)));
+	solid2 = new Solid(ShaderBuilder::hypercubeSDFString(0.5));
 	run(1.0/120.0);
 	delete solid;
+	delete solid2;
 
     glfwTerminate();
 	return 0;
